@@ -5,7 +5,7 @@ export default class MatchService {
 
     constructor() {
         this.axios = axios.create({
-            baseURL: process.env.REACT_APP_BASE_URL,
+            baseURL: process.env.REACT_APP_MATCH_SVC_BASE_URL,
             timeout: 5000
         });
     }
@@ -18,11 +18,15 @@ export default class MatchService {
 
     async listenToMatch({passengerId, matchId}) {
         return new Promise((resolve) => {
-            setInterval(async () => {
-                const match = await this.axios.get(`/api/users/${passengerId}/matches/${matchId}`);
-                if (match.completed) {
-                    resolve(match);
-                }
+            const taskId = setInterval(() => {
+                this.axios.get(`/api/users/${passengerId}/matches/${matchId}`)
+                    .then(res => {
+                        const match = res.data;
+                        if (match.completed) {
+                            resolve(match);
+                            clearInterval(taskId);
+                        }
+                    })
             }, 3000)
         });
     }

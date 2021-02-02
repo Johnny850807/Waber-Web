@@ -6,7 +6,7 @@ const TYPE_PASSENGER = 'passenger'
 class UserService {
     constructor() {
         this.axios = axios.create({
-            baseURL: process.env.REACT_APP_BASE_URL,
+            baseURL: process.env.REACT_APP_USER_SVC_BASE_URL,
             timeout: 5000
         });
     }

@@ -4,7 +4,8 @@ import './main.css'
 import "bulma";
 import {UserService} from "./api/UserService";
 import {withRouter} from 'react-router-dom'
-import {KEY_USER_ID} from "./consts";
+import {storage} from "./localstorage";
+import {Location} from "./model/models";
 
 const PASSENGER_TYPE = 'Passenger';
 const DRIVER_TYPE = 'Driver';
@@ -17,11 +18,9 @@ function periodicallyUpdateLocation(userId) {
     setInterval(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
-                userService.updateLocation({
-                    userId,
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude
-                })
+                const location = new Location(position.coords.latitude, position.coords.longitude);
+                storage.saveUserCurrentLocation(location);
+                userService.updateLocation({userId, ...location})
                     .catch(err => console.error(err));
             })
         }
@@ -29,7 +28,7 @@ function periodicallyUpdateLocation(userId) {
 }
 
 function loginSuccessfully({history, userData}) {
-    localStorage.setItem(KEY_USER_ID, userData.id);
+    storage.saveUserId(userData.id);
     periodicallyUpdateLocation(userData.id);
     if (userData.carType) { // only the driver has the attribute 'carType'
         history.push('/driver');
