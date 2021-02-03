@@ -4,7 +4,16 @@ const CAR_TYPES = {
     SPORT: 'Sport'
 }
 
+class Match {
+    constructor({id, startLocation, driverId, driverName, matchPreferences}) {
+        this.id = id;
+        this.startLocation = startLocation;
+        this.driverId = driverId;
+        this.driverName = driverName;
+        this.matchPreferences = matchPreferences;
+    }
 
+}
 class Location {
     constructor(latitude, longitude) {
         this.latitude = latitude;

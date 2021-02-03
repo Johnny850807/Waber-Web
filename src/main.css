@@ -42,6 +42,11 @@
     transition: all 0.3 ease;
     cursor: pointer;
 }
+.panel button.disabled {
+    background: #4c4c4c;
+    cursor: default;
+    pointer-events: none;
+}
 
 .panel button:hover, .panel button:active, .panel button:focus {
     background: #43A047;

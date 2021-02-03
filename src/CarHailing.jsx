@@ -5,6 +5,8 @@ import MatchService from "./api/MatchService";
 import {storage} from "./localstorage"
 import {Location} from "./model/models";
 import {CAR_TYPES} from "./model/models";
+import SockJsClient from 'react-stomp';
+
 
 const matchService = new MatchService();
 
@@ -52,10 +54,11 @@ const MatchingStatusView = ({matchId, destination}) => {
             startMatching({
                 passengerId: storage.getUserId(),
                 startLocation: storage.getUserCurrentLocation(),
+                carType: CAR_TYPES.NORMAL,
                 onMatch: m => setMatch(m)
             });
         }
-    });
+    }, [destination.latitude, destination.longitude, match, matchId]);
     return (
         <div className="matchingStatusView mt-3">
             {match ?
@@ -83,7 +86,7 @@ export default function CarHailing() {
         if (matchId) {
             setMatching(true)
         }
-    }, [matchId])
+    })
 
     return (
         <div className="page">
@@ -101,7 +104,7 @@ export default function CarHailing() {
                 <form onSubmit={startMatching}>
                     <input type="number" disabled={matching} placeholder="latitude" defaultValue="25.047"/>
                     <input type="number" disabled={matching} placeholder="longitude" defaultValue="121.51"/>
-                    <button type="submit" disabled={matching}>Go!</button>
+                    <button type="submit" className={matching ? 'disabled' : ''}>Go!</button>
                 </form>
                 {matching ? <MatchingStatusView matchId={matchId} destination={destination}/> : null}
             </div>
