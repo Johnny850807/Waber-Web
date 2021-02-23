@@ -6,16 +6,16 @@ import {storage} from "./localstorage"
 import {Location} from "./model/models";
 import {CAR_TYPES} from "./model/models";
 
-
 const matchService = new MatchService();
 
 
 function listenToMatchEvent({passengerId, matchId, onMatch}) {
     matchService.listenToMatch({
         passengerId, matchId
-    }).then(match => {
-        console.log(match.driver.name);
-        onMatch(match);
+    }).then(({passengerId, driverId}) => {
+        console.log(`Match passenger (${passengerId}) to driver (${driverId})`);
+        matchService.getPassengerCurrentMatch({passengerId})
+            .then(res => onMatch(res.data));
     });
 }
 

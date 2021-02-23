@@ -13,8 +13,12 @@ export default class MatchService {
         this.client = new Client();
         this.client.brokerURL = process.env.REACT_APP_BROKER_SVC_BASE_URL;
         this.client.activate();
-        this.client.onConnect =  (frame) => {
-            this.client.subscribe('/topic/health', (message) => console.log(message.body));
+        this.client.onConnect = (frame) => {
+            const healthCheck = this.client.subscribe('/topic/health',
+                (message) => {
+                    console.log(`Websocket broker's Health Check: ${message.body}.`);
+                    this.client.unsubscribe(healthCheck.id);
+                });
         };
     }
 
@@ -31,16 +35,11 @@ export default class MatchService {
     async listenToMatch({passengerId, matchId}) {
         if (!this.listenToMatch$) {
             this.listenToMatch$ = new Promise((resolve) => {
-                const taskId = setInterval(() => {
-                    this.axios.get(`/api/users/${passengerId}/matches/${matchId}`)
-                        .then(res => {
-                            const match = res.data;
-                            if (match.completed) {
-                                resolve(match);
-                                clearInterval(taskId);
-                            }
-                        })
-                }, 3000)
+                const listening = this.client.subscribe(`/topic/passengers/${passengerId}/matches`, message => {
+                    const {passengerId, driverId} = JSON.parse(message.body);
+                    resolve({passengerId, driverId});
+                    this.client.unsubscribe(listening.id);
+                });
             });
         }
         return this.listenToMatch$;
