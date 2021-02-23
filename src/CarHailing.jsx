@@ -6,29 +6,7 @@ import {storage} from "./localstorage"
 import {Location} from "./model/models";
 import {CAR_TYPES} from "./model/models";
 
-
 const matchService = new MatchService();
-
-
-const TripStatusView = (({match}) => {
-    return (
-        <div>
-            <p>Match Driver: {match.driver.name}</p>
-            <p>The driver's location: </p>
-        </div>
-    );
-});
-
-function startMatching({passengerId, startLocation, carType, onMatch}) {
-    matchService.startMatching({
-        passengerId, startLocation, carType
-    }).then(res => {
-        console.log(res.data);
-        const matchId = res.data.id;
-        storage.saveMatchId(matchId)
-        listenToMatchEvent({passengerId, matchId, onMatch});
-    });
-}
 
 function listenToMatchEvent({passengerId, matchId, onMatch}) {
     matchService.listenToMatch({
@@ -39,53 +17,40 @@ function listenToMatchEvent({passengerId, matchId, onMatch}) {
     });
 }
 
-const MatchingStatusView = ({matchId, destination}) => {
-    const [match, setMatch] = React.useState()
-    useEffect(() => {
-        console.log(`N ${destination.latitude}, E ${destination.longitude}`);
-        if (matchId) {
-            listenToMatchEvent({
-                passengerId: storage.getUserId(),
-                matchId,
-                onMatch: m => setMatch(m)
-            });
-        } else {
-            startMatching({
-                passengerId: storage.getUserId(),
-                startLocation: storage.getUserCurrentLocation(),
-                carType: CAR_TYPES.NORMAL,
-                onMatch: m => setMatch(m)
-            });
-        }
-    }, [destination.latitude, destination.longitude, match, matchId]);
-    return (
-        <div className="matchingStatusView mt-3">
-            {match ?
-                <TripStatusView match={match}/>
-                : <p>Matching ...</p>
-            }
-        </div>
-    )
-}
-
 export default function CarHailing() {
-    let [matching, setMatching] = React.useState(false);
-    let [destination, setDestination] = React.useState(storage.getDestination());
-    const matchId = storage.getMatchId();
+    const passengerId = storage.getUserId();
+    const [match, setMatch] = React.useState();
+
+    useEffect(() => {
+        if (match) {
+            if (!match.completed) {
+                console.log("Listening for matching...");
+                listenToMatchEvent({
+                    passengerId,
+                    matchId: match.id,
+                    onMatch: match => setMatch(match)
+                });
+            }
+        } else {
+            matchService.getPassengerCurrentMatch({passengerId})
+                .then(res => setMatch(res.data));
+        }
+    }, [match])
 
     const startMatching = (e) => {
         e.preventDefault();
+        // TODO: the destination is not used temporarily
         const destination = new Location(parseFloat(e.target[0].value), parseFloat(e.target[1].value));
-        setDestination(destination);
-        storage.saveDestination(destination);
-        setMatching(true);
+        matchService.startMatching({
+            passengerId,
+            startLocation: storage.getUserCurrentLocation(),
+            carType: CAR_TYPES.NORMAL  // TODO: hard-coded for a while
+        }).then(res => {
+            console.log(res.data);
+            const match = res.data;
+            setMatch(match);
+        });
     }
-
-    useEffect(() => {
-        if (matchId) {
-            setMatching(true)
-        }
-    })
 
     return (
         <div className="page">
@@ -101,11 +66,21 @@ export default function CarHailing() {
                     </div>
                 </section>
                 <form onSubmit={startMatching}>
-                    <input type="number" disabled={matching} placeholder="latitude" defaultValue="25.047"/>
-                    <input type="number" disabled={matching} placeholder="longitude" defaultValue="121.51"/>
-                    <button type="submit" className={matching ? 'disabled' : ''}>Go!</button>
+                    <input type="number" disabled={match} placeholder="latitude" defaultValue="25.047"/>
+                    <input type="number" disabled={match} placeholder="longitude" defaultValue="121.51"/>
+                    <button type="submit" className={match ? 'disabled' : ''}>Go!</button>
                 </form>
-                {matching ? <MatchingStatusView matchId={matchId} destination={destination}/> : null}
+                {match ? (
+                    <div className="matchingStatusView mt-3">
+                        {match.completed ? (
+                            <div>
+                                <p>Match Driver: {match.driver.name}</p>
+                                <p>The driver's location: </p>
+                            </div>
+                        ) : <p>Matching ...</p>
+                        }
+                    </div>
+                ) : null}
             </div>
         </div>
     );

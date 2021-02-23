@@ -18,8 +18,8 @@ export default class MatchService {
         })
     }
 
-    async getPassengerMatch({passengerId}) {
-        return this.axios.get(`/api/users/${passengerId}/matches/current}`);
+    async getPassengerCurrentMatch({passengerId}) {
+        return this.axios.get(`/api/users/${passengerId}/matches/current`);
     }
 
     async listenToMatch({passengerId, matchId}) {
