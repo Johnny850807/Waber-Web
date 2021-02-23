@@ -6,7 +6,9 @@ import {storage} from "./localstorage"
 import {Location} from "./model/models";
 import {CAR_TYPES} from "./model/models";
 
+
 const matchService = new MatchService();
+
 
 function listenToMatchEvent({passengerId, matchId, onMatch}) {
     matchService.listenToMatch({

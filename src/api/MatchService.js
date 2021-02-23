@@ -1,15 +1,21 @@
 import axios from "axios";
-const Stomp = require('stompjs');
-
+import {Client} from "@stomp/stompjs";
 
 export default class MatchService {
-    listenToMatch$;
 
     constructor() {
+        this.listenToMatch$ = null;
         this.axios = axios.create({
             baseURL: process.env.REACT_APP_MATCH_SVC_BASE_URL,
             timeout: 5000
         });
+
+        this.client = new Client();
+        this.client.brokerURL = process.env.REACT_APP_BROKER_SVC_BASE_URL;
+        this.client.activate();
+        this.client.onConnect =  (frame) => {
+            this.client.subscribe('/topic/health', (message) => console.log(message.body));
+        };
     }
 
     async startMatching({passengerId, startLocation, carType}) {
