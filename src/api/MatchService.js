@@ -10,7 +10,6 @@ export default class MatchService {
             baseURL: process.env.REACT_APP_MATCH_SVC_BASE_URL,
             timeout: 5000
         });
-        this.wsClient = Stomp.overWS(process.env.REACT_APP_BROKER_SVC_BASE_URL);
     }
 
     async startMatching({passengerId, startLocation, carType}) {

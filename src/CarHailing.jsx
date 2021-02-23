@@ -5,7 +5,6 @@ import MatchService from "./api/MatchService";
 import {storage} from "./localstorage"
 import {Location} from "./model/models";
 import {CAR_TYPES} from "./model/models";
-import SockJsClient from 'react-stomp';
 
 
 const matchService = new MatchService();
