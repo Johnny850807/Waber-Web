@@ -4,16 +4,33 @@ const CAR_TYPES = {
     SPORT: 'Sport'
 }
 
-class Match {
-    constructor({id, startLocation, driverId, driverName, matchPreferences}) {
+class User {
+    constructor({id, name}) {
         this.id = id;
-        this.startLocation = startLocation;
-        this.driverId = driverId;
-        this.driverName = driverName;
-        this.matchPreferences = matchPreferences;
+        this.name = name;
+    }
+}
+
+class Match {
+    constructor({id, driver, completed, matchPreferences, createdDate}) {
+        this.id = id;
+        this.completed = completed;
+        this.driver = new User(driver);
+        this.matchPreferences = new MatchPreferences(matchPreferences);
+        this.createdDate = new Date(createdDate);
+    }
+}
+
+class MatchPreferences {
+    constructor({startLocation, carType, activityName}) {
+        this.carType = carType;
+        this.activityName = activityName;
+        this.startLocation = new Location(startLocation.latitude, startLocation.longitude);
+
     }
 
 }
+
 class Location {
     constructor(latitude, longitude) {
         this.latitude = latitude;
@@ -31,4 +48,4 @@ class Location {
 }
 
 
-export {CAR_TYPES, Location};
+export {CAR_TYPES, User, Location, Match};

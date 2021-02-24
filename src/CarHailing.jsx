@@ -1,27 +1,25 @@
 import './CarHailing.css'
 import './main.css'
 import React, {useEffect} from "react";
-import MatchService from "./api/MatchService";
 import {storage} from "./localstorage"
-import {Location} from "./model/models";
-import {CAR_TYPES} from "./model/models";
-
-const matchService = new MatchService();
+import {CAR_TYPES, Location} from "./model/models";
+import {matchService, userService} from "./api/services";
 
 
 function listenToMatchEvent({passengerId, matchId, onMatch}) {
-    matchService.listenToMatch({
-        passengerId, matchId
-    }).then(({passengerId, driverId}) => {
+    matchService.listenToMatch(passengerId)
+        .then(({passengerId, driverId}) => {
         console.log(`Match passenger (${passengerId}) to driver (${driverId})`);
-        matchService.getPassengerCurrentMatch({passengerId})
+        matchService.getUserCurrentMatch(passengerId)
             .then(res => onMatch(res.data));
     });
 }
 
+
 export default function CarHailing() {
     const passengerId = storage.getUserId();
     const [match, setMatch] = React.useState();
+    const [driverLocation, setDriverLocation] = React.useState();
 
     useEffect(() => {
         if (match) {
@@ -30,12 +28,23 @@ export default function CarHailing() {
                 listenToMatchEvent({
                     passengerId,
                     matchId: match.id,
-                    onMatch: match => setMatch(match)
+                    onMatch: match => {
+                        setMatch(match);
+                        userService.subscribeToDriverLocation(match.driver.id, location => {
+                            setDriverLocation(location);
+                        });
+                    }
                 });
             }
         } else {
-            matchService.getPassengerCurrentMatch({passengerId})
-                .then(res => setMatch(res.data));
+            matchService.getUserCurrentMatch(passengerId)
+                .then(res => {
+                    const match = res.data;
+                    setMatch(match);
+                    userService.subscribeToDriverLocation(match.driver.id, location => {
+                        setDriverLocation(location);
+                    });
+                });
         }
     }, [match])
 
@@ -77,7 +86,7 @@ export default function CarHailing() {
                         {match.completed ? (
                             <div>
                                 <p>Match Driver: {match.driver.name}</p>
-                                <p>The driver's location: </p>
+                                <p>The driver's location: {driverLocation?.toString()}</p>
                             </div>
                         ) : <p>Matching ...</p>
                         }

@@ -2,17 +2,15 @@ import React from "react";
 import './SignPage.css'
 import './main.css'
 import "bulma";
-import {UserService} from "./api/UserService";
 import {withRouter} from 'react-router-dom'
 import {storage} from "./localstorage";
 import {Location} from "./model/models";
+import {userService} from "./api/services";
 
 const PASSENGER_TYPE = 'Passenger';
 const DRIVER_TYPE = 'Driver';
 const SIGN_UP_FORM = 100;
 const SIGN_IN_FORM = 200;
-
-const userService = new UserService();
 
 function periodicallyUpdateLocation(userId) {
     setInterval(() => {

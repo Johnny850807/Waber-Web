@@ -1,14 +1,17 @@
 import axios from "axios";
+import {Location} from "../model/models";
 
 const TYPE_DRIVER = 'driver'
 const TYPE_PASSENGER = 'passenger'
 
 class UserService {
-    constructor() {
+    constructor(stompClient) {
+        this.driverLocationSubscriptions = {};  // <driverId, promise>
         this.axios = axios.create({
             baseURL: process.env.REACT_APP_USER_SVC_BASE_URL,
             timeout: 5000
         });
+        this.stompClient = stompClient;
     }
 
     async login({email, password}) {
@@ -35,6 +38,17 @@ class UserService {
         return await this.axios.put(`/api/users/${userId}/location`, null, {
             params: {latitude, longitude}
         })
+    }
+
+    subscribeToDriverLocation(driverId, onNext) {
+        if (!this.driverLocationSubscriptions[driverId]) {
+            this.driverLocationSubscriptions[driverId] = this.stompClient.subscribe(`/topic/users/${driverId}/location`, message => {
+                const event = JSON.parse(message.body);
+                const {latitude, longitude} = event.location;
+                onNext(new Location(latitude, longitude));
+            });
+        }
+        return this.driverLocationSubscriptions[driverId];
     }
 }
 
