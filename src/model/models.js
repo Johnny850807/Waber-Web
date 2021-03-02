@@ -12,8 +12,9 @@ class User {
 }
 
 class Match {
-    constructor({id, driver, completed, matchPreferences, createdDate}) {
+    constructor({id, passengerId, driver, completed, matchPreferences, createdDate}) {
         this.id = id;
+        this.passengerId = passengerId;
         this.completed = completed;
         this.driver = new User(driver);
         this.matchPreferences = new MatchPreferences(matchPreferences);
