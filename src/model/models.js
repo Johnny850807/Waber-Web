@@ -49,4 +49,8 @@ class Location {
 }
 
 
-export {CAR_TYPES, User, Location, Match};
+const TRIP_STATE = {
+    Start: 'START', Driving: 'DRIVING', Arrived: 'ARRIVED'
+};
+
+export {CAR_TYPES, User, Location, Match, TRIP_STATE};

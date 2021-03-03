@@ -36,11 +36,7 @@ export default class StompClient {
             });
         }
 
-        const client = this.stompClientImpl;
-        return {
-            unsubscribe: () => client.unsubscribe(subscriberId)
-        }
-
+        return new Subscription(subscriberId, this.stompClientImpl);
     }
 
     unsubscribe(subscriberId) {
@@ -53,5 +49,27 @@ export default class StompClient {
 
     isConnected() {
         return this.stompClientImpl?.connected;
+    }
+}
+
+
+class Subscription {
+    constructor(id, client) {
+        this.id = id;
+        this.client = client;
+        this.canceled = false;
+    }
+
+    unsubscribe() {
+        this.client.unsubscribe(this.id)
+        this.canceled = true;
+    }
+
+    isCanceled() {
+        return this.canceled;
+    }
+
+    isAlive() {
+        return !this.canceled;
     }
 }

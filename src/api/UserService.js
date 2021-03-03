@@ -41,7 +41,7 @@ class UserService {
     }
 
     subscribeToDriverLocation(driverId, onNext) {
-        if (!this.driverLocationSubscriptions[driverId]) {
+        if (!this.driverLocationSubscriptions[driverId]?.isAlive()) {
             this.driverLocationSubscriptions[driverId] = this.stompClient.subscribe(`/topic/users/${driverId}/location`, message => {
                 const event = JSON.parse(message.body);
                 const {latitude, longitude} = event.location;

@@ -2,17 +2,18 @@ import './CarHailing.css'
 import './main.css'
 import React, {useEffect} from "react";
 import {storage} from "./localstorage"
-import {CAR_TYPES, Location} from "./model/models";
-import {matchService, userService} from "./api/services";
+import {CAR_TYPES, Location, TRIP_STATE} from "./model/models";
+import {matchService, tripService, userService} from "./api/services";
+import {Switch} from "./utils";
 
 
 function listenToMatchEvent({passengerId, matchId, onMatch}) {
-    matchService.listenToMatch(passengerId)
+    matchService.subscribeToMatchCompletion(passengerId)
         .then(({passengerId, driverId}) => {
-        console.log(`Match passenger (${passengerId}) to driver (${driverId})`);
-        matchService.getUserCurrentMatch(passengerId)
-            .then(res => onMatch(res.data));
-    });
+            console.log(`Match passenger (${passengerId}) to driver (${driverId})`);
+            matchService.getUserCurrentMatch(passengerId)
+                .then(res => onMatch(res.data));
+        });
 }
 
 
@@ -20,6 +21,7 @@ export default function CarHailing() {
     const passengerId = storage.getUserId();
     const [match, setMatch] = React.useState();
     const [driverLocation, setDriverLocation] = React.useState();
+    const [tripState, setTripState] = React.useState();
 
     useEffect(() => {
         if (match) {
@@ -33,6 +35,7 @@ export default function CarHailing() {
                         userService.subscribeToDriverLocation(match.driver.id, location => {
                             setDriverLocation(location);
                         });
+                        tripService.subscribeToTripStateChange(passengerId, state => setTripState(state));
                     }
                 });
             }
@@ -44,9 +47,15 @@ export default function CarHailing() {
                     userService.subscribeToDriverLocation(match.driver.id, location => {
                         setDriverLocation(location);
                     });
+                    tripService.subscribeToTripStateChange(passengerId, state => setTripState(state));
                 });
         }
-    }, [match])
+
+        if (!tripState) {
+            tripService.getCurrentTrip(passengerId)
+                .then(res => setTripState(res.data.state));
+        }
+    }, [match, tripState])
 
     const startMatching = (e) => {
         e.preventDefault();
@@ -60,6 +69,7 @@ export default function CarHailing() {
             console.log(res.data);
             const match = res.data;
             setMatch(match);
+            tripService.subscribeToTripStateChange(passengerId, state => setTripState(state));
         });
     }
 
@@ -92,6 +102,21 @@ export default function CarHailing() {
                         }
                     </div>
                 ) : null}
+                {tripState ? (
+                    <div>
+                        <Switch test={tripState}>
+                            <p value={TRIP_STATE.Start}>
+                                The driver is coming...
+                            </p>
+                            <p value={TRIP_STATE.Driving}>
+                                Driving to the destination ...
+                            </p>
+                            <p value={TRIP_STATE.Arrived}>
+                                You have arrived the destination.
+                            </p>
+                        </Switch>
+                    </div>
+                ): null}
             </div>
         </div>
     );

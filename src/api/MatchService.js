@@ -2,7 +2,7 @@ import axios from "axios";
 
 export default class MatchService {
     constructor(stompClient) {
-        this.listenToMatch$ = null;
+        this.matchCompletion$ = null;
         this.axios = axios.create({
             baseURL: process.env.REACT_APP_MATCH_SVC_BASE_URL,
             timeout: 5000
@@ -20,18 +20,21 @@ export default class MatchService {
         return this.axios.get(`/api/users/${userId}/matches/current`);
     }
 
-    async listenToMatch(userId) {
-        if (!this.listenToMatch$) {
-            this.listenToMatch$ = new Promise((resolve) => {
+    // TODO: use RxJs
+    async subscribeToMatchCompletion(userId) {
+        if (!this.matchCompletion$) {
+            const service = this;
+            this.matchCompletion$ = new Promise((resolve) => {
+                console.log(`Subscribe to matchCompletion (userId=${userId}).`);
                 const subscription = this.stompClient.subscribe(`/topic/users/${userId}/matches`, message => {
                     const {passengerId, driverId} = JSON.parse(message.body);
+                    service.matchCompletion$ = undefined;
                     resolve({passengerId, driverId});
                     subscription.unsubscribe();
                 });
             });
         }
-        return this.listenToMatch$;
+        return this.matchCompletion$;
     }
-
 
 }

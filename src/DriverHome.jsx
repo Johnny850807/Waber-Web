@@ -1,38 +1,39 @@
 import React, {useEffect} from "react";
-import {CAR_TYPES, Location, Match} from "./model/models";
+import {CAR_TYPES, Location, Match, TRIP_STATE} from "./model/models";
 import {matchService, tripService, userService} from "./api/services";
 import {storage} from "./localstorage";
 import {Switch} from "./utils";
 
 
-const TRIP_STATUS = {
-  Start: 'Start', Driving: 'Driving', Arrived: 'Arrived'
-};
 
 export default function DriverHome() {
     const [match, setMatch] = React.useState();
-    const [tripStatus, setTripStatus] = React.useState();
+    const [tripState, setTripState] = React.useState();
     const [updatingLocation, setUpdatingLocation] = React.useState(false);
     const driverId = storage.getUserId();
 
     useEffect(() => {
         if (!match) {
-            matchService.listenToMatch(driverId)
+            matchService.subscribeToMatchCompletion(driverId)
                 .then(({passengerId, driverId}) => {
                     console.log(`Match driver (${driverId}) to passenger (${passengerId})`);
                     matchService.getUserCurrentMatch(driverId)
                         .then(res => {
                             setMatch(new Match(res.data));
-                            setTripStatus(TRIP_STATUS.Start);
+                            setTripState(TRIP_STATE.Start);
                         });
                 });
             matchService.getUserCurrentMatch(driverId)
                 .then(res => {
                     setMatch(new Match(res.data));
-                    setTripStatus(TRIP_STATUS.Start);
+                    setTripState(TRIP_STATE.Start);
                 });
         }
-    }, [match, tripStatus])
+        if (!tripState) {
+            tripService.getCurrentTrip(driverId)
+                .then(res => setTripState(res.data.state));
+        }
+    }, [match, tripState])
 
     const updateLocation = (e) => {
         e.preventDefault();
@@ -49,7 +50,7 @@ export default function DriverHome() {
         tripService.startDriving(match.passengerId, new Location(200, 200) /*TODO: hard-coded destination*/)
             .then(res => {
                 console.log('Trip: Start Driving');
-                setTripStatus(TRIP_STATUS.Driving);
+                setTripState(TRIP_STATE.Driving);
             })
     }
 
@@ -57,7 +58,7 @@ export default function DriverHome() {
         tripService.arriveDestination(match.passengerId)
             .then(res => {
                 console.log('Trip: Arrived');
-                setTripStatus(TRIP_STATUS.Arrived);
+                setTripState(TRIP_STATE.Arrived);
             })
     }
 
@@ -75,15 +76,15 @@ export default function DriverHome() {
                         <div>
                             <p>Match Passenger</p>
                             <p>Start Location: {match?.matchPreferences.startLocation.toString()}</p>
-                            <Switch test={tripStatus}>
-                                <div value={TRIP_STATUS.Start}>
+                            <Switch test={tripState}>
+                                <div value={TRIP_STATE.Start}>
                                     <p>Picking up the passenger ...</p>
                                     <button onClick={pickupPassenger} className="mt-4">Pick Up the Passenger</button>
                                 </div>
-                                <div value={TRIP_STATUS.Driving}>
+                                <div value={TRIP_STATE.Driving}>
                                     <p>Driving to the destination ...</p>
                                     <button onClick={arriveDestination} className="mt-4">Arrive Destination</button>                                </div>
-                                <div value={TRIP_STATUS.Arrived}>
+                                <div value={TRIP_STATE.Arrived}>
                                     <p>Arrived</p>
                                 </div>
                             </Switch>
