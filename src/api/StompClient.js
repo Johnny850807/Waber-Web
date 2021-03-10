@@ -14,8 +14,7 @@ export default class StompClient {
     connect() {
         this.stompClientImpl = new Client();
         this.stompClientImpl.brokerURL = process.env.REACT_APP_BROKER_SVC_BASE_URL;
-        this.stompClientImpl.activate();
-        this.stompClientImpl.onConnect((frame) => {
+        this.stompClientImpl.onConnect = (frame) => {
             console.log("WebSocket connected.")
             const healthCheck = this.stompClientImpl.subscribe('/topic/health',
                 (message) => {
@@ -23,7 +22,8 @@ export default class StompClient {
                     this.stompClientImpl.unsubscribe(healthCheck.id);
                 });
             this.onConnectListeners.forEach(l => l(frame));
-        })
+        };
+        this.stompClientImpl.activate();
     }
 
     subscribe(destination, subscriber) {
